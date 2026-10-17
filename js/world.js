@@ -74,7 +74,7 @@ window.TM = window.TM || {};
     const n = Math.round(2 + dens * 7 + r() * 2);
     for (let k = 0; k < n; k++) {
       const x = x0 + r() * CW, y = y0 + r() * CH;
-      if (y < 320 && Math.abs(x) < 80) continue; // la piste de départ reste libre
+      if (y < 520 && Math.abs(x) < 80) continue; // la piste de départ reste libre
       if (tooClose(list, x, y, 16)) continue;
       const t = r();
       if (t < 0.38) list.push({ type: 'tree', x: x, y: y, s: r() });
