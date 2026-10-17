@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Schuss ! Télé-Marmotte</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="La marmotte de Télé-Marmotte dévale la montagne à skis : descente sans fin avec la dameuse aux trousses, ou slalom chronométré.">
+<meta name="theme-color" content="#101826">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=VT323&display=swap">
+<style>
+/* Une vidéo verticale tournée en caméra embarquée : la pente blanche plein écran sur téléphone,
+   l'OSD du caméscope par-dessus, et le menu en forfaits de ski. Thème sombre unique, choisi. */
+:root {
+  --night: #101826;
+  --night-2: #1c2940;
+  --snow: #f3f7fc;
+  --red: #d8332b;
+  --blue: #2f62d4;
+  --gold: #f5c842;
+  --pass: #fffdf6;
+  --ink: #1b1410;
+  --osd: #f6f3ea;
+  --font-logo: 'Bungee', 'Arial Black', Impact, sans-serif;
+  --font-osd: 'VT323', 'Lucida Console', 'Courier New', monospace;
+  color-scheme: dark;
+}
+html { height: 100%; box-sizing: border-box; }
+body { height: 100%; margin: 0; }
+[hidden] { display: none !important; }
+body {
+  background: radial-gradient(ellipse at 50% 0%, var(--night-2), var(--night) 70%);
+  color: var(--osd); font-family: var(--font-osd);
+  overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+#app {
+  box-sizing: border-box; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+#app.mode-phone { padding: 0; gap: 0; }
+#screen { position: relative; overflow: hidden; container-type: size; background: var(--snow); touch-action: none; }
+.mode-desk #screen { border-radius: 22px; box-shadow: 0 0 0 7px #070a10, 0 0 0 9px #33405a, 0 24px 48px rgba(0,0,0,.55); }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+#legend { margin: 0; font-size: 18px; color: #a9b6cf; text-align: center; }
+#legend kbd { font-family: inherit; color: var(--osd); border: 1px solid #4a5874; border-radius: 4px; padding: 0 .3em; }
+.mode-phone #legend { display: none; }
+
+/* ---------- OSD du caméscope ---------- */
+.osd { font-family: var(--font-osd); line-height: 1; color: var(--osd); text-shadow: 1px 1px 0 #000, 0 0 3px rgba(0,0,0,.7); }
+#hud {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 2; pointer-events: none;
+  padding: calc(env(safe-area-inset-top, 0px) + 3cqw) 4cqw 9cqw;
+  background: linear-gradient(rgba(10,16,30,.62), rgba(10,16,30,0));
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 3cqw;
+}
+.hud-l { display: flex; align-items: center; gap: 2.4cqw; font-size: max(16px, 6cqw); }
+.rec { color: #ff4a3d; display: flex; align-items: center; gap: .25em; }
+.rec::before { content: ''; width: .5em; height: .5em; border-radius: 50%; background: #ff4a3d; animation: blink 1.2s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+#btn-pause {
+  pointer-events: auto; width: max(36px, 11cqw); height: max(32px, 9cqw);
+  border: 1px solid rgba(255,255,255,.6); border-radius: 6px; background: rgba(0,0,0,.3);
+  font-family: var(--font-osd); font-size: max(16px, 5.5cqw); color: var(--osd);
+}
+.hud-r { text-align: right; display: flex; flex-direction: column; gap: .15em; }
+#h-big { font-size: max(26px, 10cqw); }
+#h-small { font-size: max(15px, 5cqw); }
+#dam {
+  position: absolute; left: 50%; transform: translateX(-50%); z-index: 3;
+  top: calc(env(safe-area-inset-top, 0px) + max(64px, 23cqw));
+  padding: .15em .6em .2em; border-radius: 99px;
+  background: var(--red); color: #fff; font-size: max(17px, 6cqw);
+  animation: blink .7s steps(1) infinite; pointer-events: none; white-space: nowrap;
+}
+#pop {
+  position: absolute; left: 0; right: 0; top: 40%; z-index: 3; text-align: center; pointer-events: none;
+  font-size: max(20px, 8cqw); color: var(--gold);
+  text-shadow: 2px 2px 0 var(--ink), -1px -1px 0 var(--ink), 1px -1px 0 var(--ink), -1px 1px 0 var(--ink);
+}
+#flash {
+  position: absolute; left: 4cqw; right: 4cqw; top: 30%; z-index: 3; text-align: center; pointer-events: none;
+  font-family: var(--font-logo); font-size: max(18px, 7.5cqw); line-height: 1.1; color: var(--red);
+  text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+}
+#pop.go, #flash.go { animation: pop 1.3s ease-out forwards; }
+#flash.go { animation-duration: 2s; }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 12% { transform: scale(1.08); opacity: 1; } 22% { transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
+#help {
+  position: absolute; left: 4cqw; right: 4cqw; z-index: 3; pointer-events: none;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5cqw);
+  padding: .4em .7em .45em; border-radius: 8px;
+  background: rgba(10,16,30,.78); text-align: center;
+  font-size: max(16px, 5.4cqw); line-height: 1.05;
+}
+
+/* ---------- Menus ---------- */
+.scr {
+  position: absolute; inset: 0; z-index: 4; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: max(8px, 3.2cqw);
+  padding: calc(env(safe-area-inset-top, 0px) + 6cqw) 6cqw calc(env(safe-area-inset-bottom, 0px) + 6cqw);
+  background: linear-gradient(rgba(10,16,30,.66), rgba(10,16,30,.25) 40%, rgba(10,16,30,.66));
+  text-align: center;
+}
+.badge { margin: 0; font-family: var(--font-logo); font-size: max(12px, 4cqw); letter-spacing: .08em; color: #fff; background: var(--red); padding: .25em .6em .15em; border-radius: .3em; box-shadow: 2px 2px 0 var(--ink); }
+.logo { margin: 0; font-family: var(--font-logo); font-weight: normal; font-size: max(40px, 17cqw); line-height: .95; color: #fff; text-shadow: 4px 4px 0 var(--blue), 6px 6px 0 var(--ink); }
+.tag { margin: 0; font-size: max(17px, 6cqw); line-height: 1.05; text-shadow: 1px 1px 0 #000; }
+.pass {
+  position: relative; width: min(86cqw, 420px); box-sizing: border-box;
+  display: grid; grid-template-columns: auto 1fr; gap: .1em 3cqw; align-items: center;
+  padding: 3cqw 4cqw 3cqw 7cqw; border: 0; border-radius: 10px;
+  background: var(--pass); color: var(--ink); text-align: left;
+  box-shadow: 0 4px 0 #9aa6bd, 0 8px 16px rgba(0,0,0,.35);
+}
+.pass::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3.2cqw; border-radius: 10px 0 0 10px; background: var(--blue); }
+.pass.red::before { background: var(--red); }
+.pass::after { content: ''; position: absolute; right: 4cqw; top: 3cqw; width: 3cqw; height: 3cqw; border-radius: 50%; background: var(--night-2); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+.pass-n { grid-column: 1 / -1; font-family: var(--font-logo); font-size: max(20px, 7.4cqw); line-height: 1; }
+.pass-d { grid-column: 1 / -1; font-size: max(16px, 5.2cqw); line-height: 1; color: #3d3a44; }
+.pass-b { grid-column: 1 / -1; font-size: max(16px, 5.2cqw); line-height: 1; color: var(--blue); }
+.pass.red .pass-b { color: var(--red); }
+.pass:active { transform: translateY(3px); box-shadow: 0 1px 0 #9aa6bd; }
+.how { margin: 0; max-width: 86cqw; font-size: max(16px, 5.2cqw); line-height: 1.05; color: #dfe7f5; text-shadow: 1px 1px 0 #000; }
+.row { display: flex; gap: 3cqw; flex-wrap: wrap; justify-content: center; }
+.btn {
+  min-height: 38px; padding: .25em .9em .3em; border: 0; border-radius: 8px;
+  font-size: max(18px, 6.2cqw); line-height: 1;
+  background: var(--pass); color: var(--ink); box-shadow: 0 3px 0 #9aa6bd;
+}
+.btn.ghost { background: rgba(0,0,0,.35); color: var(--osd); border: 1px solid rgba(255,255,255,.5); box-shadow: none; }
+.btn:active { transform: translateY(2px); }
+.scr h2 { margin: 0; font-family: var(--font-logo); font-weight: normal; font-size: max(30px, 12cqw); line-height: 1; color: #fff; text-shadow: 3px 3px 0 var(--red), 5px 5px 0 var(--ink); }
+.scr p.sub { margin: 0; font-size: max(17px, 6cqw); line-height: 1.05; text-shadow: 1px 1px 0 #000; }
+#over-record { font-family: var(--font-logo); font-size: max(14px, 4.6cqw); color: var(--ink); background: var(--gold); padding: .3em .7em .2em; border-radius: 99px; }
+#over-stats {
+  margin: 0; display: grid; grid-template-columns: auto auto; gap: .2em 6cqw;
+  padding: 3cqw 5cqw; border-radius: 10px; background: rgba(10,16,30,.6);
+  font-size: max(17px, 6cqw); line-height: 1.05; text-align: left;
+}
+#over-stats dt { color: #b9c5dc; }
+#over-stats dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .rec::before, #dam { animation: none; }
+  #pop.go, #flash.go { animation-duration: .01s; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="screen">
+    <canvas id="cv" width="160" height="260" aria-label="Le jeu Schuss !"></canvas>
+
+    <div id="hud" class="osd" hidden>
+      <div class="hud-l"><button id="btn-pause" aria-label="Pause">II</button><span class="rec">REC</span><span id="h-clock">00:00</span></div>
+      <div class="hud-r"><span id="h-big">0 m</span><span id="h-small">0 km/h</span></div>
+    </div>
+    <div id="dam" class="osd" hidden>DAMEUSE ▲ <span id="dam-m">0 m</span></div>
+    <div id="pop" class="osd" hidden></div>
+    <div id="flash" hidden></div>
+    <div id="help" class="osd" hidden></div>
+
+    <section id="scr-title" class="scr">
+      <p class="badge">Télé-Marmotte</p>
+      <h1 class="logo">Schuss !</h1>
+      <p class="tag">La marmotte dévale la montagne.</p>
+      <button class="pass" id="go-descente">
+        <span class="pass-n">Descente</span>
+        <span class="pass-d">Le plus loin possible. Après 1000 m, la dameuse arrive.</span>
+        <span class="pass-b" id="best-descente">Pas encore de record</span>
+      </button>
+      <button class="pass red" id="go-slalom">
+        <span class="pass-n">Slalom</span>
+        <span class="pass-d">30 portes, le plus vite possible. Porte manquée : +5 s.</span>
+        <span class="pass-b" id="best-slalom">Pas encore de record</span>
+      </button>
+      <div class="row">
+        <button class="btn ghost" data-toggle="sfx" id="tg-sfx">Bruitages : oui</button>
+        <button class="btn ghost" data-toggle="music" id="tg-music">Musique : oui</button>
+      </div>
+    </section>
+
+    <section id="scr-pause" class="scr" hidden>
+      <h2>Pause</h2>
+      <div class="row">
+        <button class="btn" id="btn-resume">Reprendre</button>
+        <button class="btn ghost" id="btn-restart">Recommencer</button>
+        <button class="btn ghost" id="btn-menu">Menu</button>
+      </div>
+      <div class="row">
+        <button class="btn ghost" data-toggle="sfx" id="tg-sfx2">Bruitages : oui</button>
+        <button class="btn ghost" data-toggle="music" id="tg-music2">Musique : oui</button>
+      </div>
+    </section>
+
+    <section id="scr-over" class="scr" hidden>
+      <h2 id="over-title">Damée !</h2>
+      <p class="sub" id="over-sub"></p>
+      <span id="over-record" hidden>Nouveau record !</span>
+      <dl id="over-stats"></dl>
+      <div class="row">
+        <button class="btn" id="btn-again">Rejouer</button>
+        <button class="btn ghost" id="btn-menu2">Menu</button>
+      </div>
+    </section>
+  </div>
+  <p id="legend"><kbd>←</kbd> <kbd>→</kbd> tourner · <kbd>↓</kbd> tout schuss · <kbd>↑</kbd> s’arrêter · <kbd>Espace</kbd> saut, puis figure · <kbd>Échap</kbd> pause</p>
+</div>
+<noscript>Ce jeu a besoin de JavaScript.</noscript>
+<script src="js/sprites.js"></script>
+<script src="js/world.js"></script>
+<script src="js/game.js"></script>
+<script src="js/render.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
