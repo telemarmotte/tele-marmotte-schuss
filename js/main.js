@@ -62,8 +62,23 @@ window.TM = window.TM || {};
   stage.addEventListener('pointerup', release);
   stage.addEventListener('pointercancel', release);
   stage.addEventListener('contextmenu', e => e.preventDefault());
-  document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
-  document.addEventListener('gesturestart', e => e.preventDefault());
+  // iPhone : Safari passe outre « user-scalable=no ». Deux touches rapprochées à côté d'un bouton zoomaient la page,
+  // et le pincement étant bloqué, on ne pouvait plus en revenir. La deuxième touche ne zoome plus (ce qu'on touche
+  // reçoit quand même son clic) ; si la page est zoomée malgré tout, pincement et double touche sont rendus pour la remettre.
+  const zoomed = () => !!window.visualViewport && visualViewport.scale > 1.02;
+  if (window.visualViewport) visualViewport.addEventListener('resize', () => document.documentElement.classList.toggle('zoomed', zoomed()));
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = performance.now(), quick = now - lastTouchEnd < 400;
+    lastTouchEnd = now;
+    if (!quick || !e.cancelable || zoomed()) return;
+    e.preventDefault();
+    const t = e.changedTouches[0], el = t && document.elementFromPoint(t.clientX, t.clientY), b = el && el.closest('button');
+    if (el && !(b && b.disabled) && (e.target.contains(el) || (b && b.contains(e.target))))
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY }));
+  }, { passive: false });
+  document.addEventListener('touchmove', e => { if (!zoomed()) e.preventDefault(); }, { passive: false });
+  document.addEventListener('gesturestart', e => { if (!zoomed()) e.preventDefault(); });
 
   // ---------- Écrans ----------
   let screen = 'title', G = null, demo = null, paused = false;
